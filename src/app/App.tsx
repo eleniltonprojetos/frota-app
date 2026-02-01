@@ -12,7 +12,8 @@ import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
 import { Car } from 'lucide-react';
 
-const appIcon = "https://placehold.co/512/2563eb/ffffff.png?text=Frota";
+// ALTERAÇÃO AQUI: Aponta para a imagem na pasta public
+const appIcon = "/logo.png";
 
 const supabase = getSupabaseClient();
 
@@ -390,8 +391,9 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
-            <div className="bg-white p-4 rounded-xl mb-6 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
-              <Car className="h-16 w-16 text-blue-600" />
+            {/* ALTERAÇÃO AQUI: Componente atualizado para exibir o logo em vez do ícone Car */}
+            <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
+              <img src={appIcon} alt="Logo" className="h-32 w-auto object-contain" />
             </div>
             <h1 className="text-2xl mb-1 text-blue-900">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
