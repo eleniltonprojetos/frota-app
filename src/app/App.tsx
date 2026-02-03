@@ -12,7 +12,6 @@ import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
 import { Car } from 'lucide-react';
 
-// ALTERAÇÃO AQUI: Aponta para a imagem na pasta public
 const appIcon = "/logo.png";
 
 const supabase = getSupabaseClient();
@@ -32,34 +31,9 @@ function App() {
     console.log('App mounted');
 
     // PWA configuration
-    const manifest = {
-      name: "Sistema de Frota",
-      short_name: "Frota",
-      start_url: "/",
-      display: "standalone",
-      orientation: "portrait",
-      background_color: "#ffffff",
-      theme_color: "#2563eb",
-      icons: [
-        {
-          src: appIcon,
-          sizes: "192x192",
-          type: "image/png"
-        },
-        {
-          src: appIcon,
-          sizes: "512x512",
-          type: "image/png"
-        }
-      ]
-    };
-
-    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    const manifestUrl = URL.createObjectURL(manifestBlob);
-
     const link = document.createElement('link');
     link.rel = 'manifest';
-    link.href = manifestUrl;
+    link.href = '/manifest.json';
     document.head.appendChild(link);
 
     const iconLink = document.createElement('link');
@@ -391,7 +365,6 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
-            {/* ALTERAÇÃO AQUI: Componente atualizado para exibir o logo em vez do ícone Car */}
             <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
               <img src={appIcon} alt="Logo" className="h-32 w-auto object-contain" />
             </div>

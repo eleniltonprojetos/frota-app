@@ -9,14 +9,14 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1750268515519-64c02c22d08a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwYmx1ZSUyMGNhciUyMGljb24lMjBsb2dvJTIwYWJzdHJhY3R8ZW58MXx8fHwxNzY2NzEzMzYyfDA&ixlib=rb-4.1.0&q=80&w=192&h=192",
+      "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "https://images.unsplash.com/photo-1750268515519-64c02c22d08a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwYmx1ZSUyMGNhciUyMGljb24lMjBsb2dvJTIwYWJzdHJhY3R8ZW58MXx8fHwxNzY2NzEzMzYyfDA&ixlib=rb-4.1.0&q=80&w=512&h=512",
+      "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png"
     }
   ]
 }
