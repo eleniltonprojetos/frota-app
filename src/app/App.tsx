@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
 import { Car } from 'lucide-react';
-
 const appIcon = "/logo.png";
 
 const supabase = getSupabaseClient();
@@ -23,6 +22,7 @@ function App() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [adminRegistrationEnabled, setAdminRegistrationEnabled] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     checkSession();
@@ -366,7 +366,16 @@ function App() {
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
             <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
-              <img src={appIcon} alt="Logo" className="h-32 w-auto object-contain" />
+              {!logoError ? (
+                <img 
+                  src={appIcon} 
+                  alt="Logo" 
+                  className="h-32 w-auto object-contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <Car className="h-32 w-32 text-blue-600" />
+              )}
             </div>
             <h1 className="text-2xl mb-1 text-blue-900">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>

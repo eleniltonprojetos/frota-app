@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { projectId, publicAnonKey } from '../../../utils/supabase/info';
+import { projectId, supabaseKey as publicAnonKey } from '../../../utils/supabase/config';
 import { toast } from 'sonner';
 import { TripList } from './TripList';
 import { VehicleForm } from './VehicleForm';
@@ -20,6 +20,7 @@ import { Label } from './ui/label';
 import { InstallPWA } from './InstallPWA';
 
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+const appIcon = "/logo.png";
 
 interface AdminDashboardProps {
   user: User;
@@ -446,9 +447,9 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-white p-1.5 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
-                 <Car className="h-6 w-6 text-blue-600" />
+            <div className="flex items-center gap-3">
+              <div className="bg-white p-2 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center shadow-sm">
+                 <img src={appIcon} alt="Logo" className="h-10 w-auto object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Frota - Admin</h1>

@@ -3,17 +3,17 @@ import { User } from '../types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { projectId, publicAnonKey } from '../../../utils/supabase/info';
+import { projectId, supabaseKey as publicAnonKey } from '../../../utils/supabase/config';
 import { toast } from 'sonner';
 import { TripForm } from './TripForm';
 import { TripList } from './TripList';
-import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Car } from 'lucide-react';
+import { LogOut, Plus, List, CircleAlert, RefreshCw, History } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { InstallPWA } from './InstallPWA';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 import { ChangePasswordDialog } from './ChangePasswordDialog';
-
+const appIcon = "/logo.png";
 interface DriverDashboardProps {
   user: User;
   accessToken: string;
@@ -329,9 +329,9 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-white p-1.5 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center">
-                <Car className="h-6 w-6 text-blue-600" />
+            <div className="flex items-center gap-3">
+              <div className="bg-white p-2 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center shadow-sm">
+                <img src={appIcon} alt="Logo" className="h-10 w-auto object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Sistema de Frota</h1>
