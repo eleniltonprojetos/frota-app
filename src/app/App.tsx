@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
 import { Car } from 'lucide-react';
+
+// Ajuste para ambiente local/Vercel
 const appIcon = "/logo.png";
 
 const supabase = getSupabaseClient();
