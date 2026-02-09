@@ -22,7 +22,7 @@ import { InstallPWA } from './InstallPWA';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 
 // Ajuste para ambiente local/Vercel
-const appIcon = "/logo.png";
+const appIcon = "const appIcon = "https://images.unsplash.com/photo-1559497056-fe4dab665446?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsb2dpc3RpY3MlMjBmbGVldCUyMG1hbmFnZW1lbnQlMjBsb2dvJTIwbWluaW1hbGlzdCUyMHZlY3RvciUyMHN0eWxlfGVufDF8fHx8MTc3MDU5OTkwM3ww&ixlib=rb-4.1.0&q=80&w=1080";
 
 interface AdminDashboardProps {
   user: User;
