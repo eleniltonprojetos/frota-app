@@ -12,9 +12,6 @@ import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
 import { Car } from 'lucide-react';
 
-// Ajuste para ambiente local/Vercel
-const appIcon = "https://images.unsplash.com/photo-1559497056-fe4dab665446?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsb2dpc3RpY3MlMjBmbGVldCUyMG1hbmFnZW1lbnQlMjBsb2dvJTIwbWluaW1hbGlzdCUyMHZlY3RvciUyMHN0eWxlfGVufDF8fHx8MTc3MDU5OTkwM3ww&ixlib=rb-4.1.0&q=80&w=1080";
-
 const supabase = getSupabaseClient();
 
 function App() {
@@ -24,7 +21,6 @@ function App() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [adminRegistrationEnabled, setAdminRegistrationEnabled] = useState(false);
-  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     checkSession();
@@ -38,16 +34,7 @@ function App() {
     link.href = '/manifest.json';
     document.head.appendChild(link);
 
-    const iconLink = document.createElement('link');
-    iconLink.rel = 'icon';
-    iconLink.href = appIcon;
-    document.head.appendChild(iconLink);
-
-    const appleIconLink = document.createElement('link');
-    appleIconLink.rel = 'apple-touch-icon';
-    appleIconLink.href = appIcon;
-    document.head.appendChild(appleIconLink);
-
+    // Configuração de metadados PWA
     const metaCapable = document.createElement('meta');
     metaCapable.name = 'apple-mobile-web-app-capable';
     metaCapable.content = 'yes';
@@ -368,16 +355,10 @@ function App() {
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
             <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
-              {!logoError ? (
-                <img 
-                  src={appIcon} 
-                  alt="Logo" 
-                  className="h-32 w-auto object-contain"
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <Car className="h-32 w-32 text-blue-600" />
-              )}
+              {/* Logo substituído por Ícone Lucide - Funciona sempre */}
+              <div className="h-32 w-32 flex items-center justify-center">
+                <Car className="h-24 w-24 text-blue-600" strokeWidth={1.5} />
+              </div>
             </div>
             <h1 className="text-2xl mb-1 text-blue-900">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>

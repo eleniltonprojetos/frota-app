@@ -7,15 +7,12 @@ import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { TripForm } from './TripForm';
 import { TripList } from './TripList';
-import { LogOut, Plus, List, CircleAlert, RefreshCw, History } from 'lucide-react';
+import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Car } from 'lucide-react'; // Importado Car
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { InstallPWA } from './InstallPWA';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 import { ChangePasswordDialog } from './ChangePasswordDialog';
-
-// Ajuste para ambiente local/Vercel
-const appIcon = "https://images.unsplash.com/photo-1559497056-fe4dab665446?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsb2dpc3RpY3MlMjBmbGVldCUyMG1hbmFnZW1lbnQlMjBsb2dvJTIwbWluaW1hbGlzdCUyMHZlY3RvciUyMHN0eWxlfGVufDF8fHx8MTc3MDU5OTkwM3ww&ixlib=rb-4.1.0&q=80&w=1080";
 
 interface DriverDashboardProps {
   user: User;
@@ -24,6 +21,7 @@ interface DriverDashboardProps {
   onUpdatePassword: (password: string) => Promise<void>;
 }
 
+// ... Interfaces mantidas ...
 interface Trip {
   id: string;
   userId: string;
@@ -59,9 +57,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
   const completedTrips = trips.filter(t => t.status === 'completed');
 
   useEffect(() => {
-    console.log('=== DRIVER DASHBOARD MOUNTED ===');
-    console.log('User:', user);
-    console.log('Access token:', accessToken ? `${accessToken.substring(0, 30)}...` : 'MISSING');
     fetchTrips();
   }, []);
 
@@ -73,9 +68,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
 
   const fetchTrips = async () => {
     try {
-      console.log('=== FETCHING TRIPS ===');
-      console.log('Access token for request:', accessToken ? 'Present' : 'MISSING');
-      
       let response;
       let attempts = 0;
       const maxAttempts = 3;
@@ -87,61 +79,35 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
             {
               headers: {
                 'apikey': publicAnonKey, 
-                'Authorization': `Bearer ${publicAnonKey}`, // Use Anon Key for Gateway auth
-                'x-access-token': accessToken, // User token for backend logic
+                'Authorization': `Bearer ${publicAnonKey}`,
+                'x-access-token': accessToken,
                 'Cache-Control': 'no-cache',
-                'Figma': 'no-cache' 
               },
             }
           );
           if (response) break;
         } catch (fetchError) {
           attempts++;
-          console.warn(`Fetch trips attempt ${attempts} failed:`, fetchError);
           if (attempts >= maxAttempts) throw fetchError;
-          await new Promise(r => setTimeout(r, 1000)); // Wait 1s between retries
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
 
-      if (!response) throw new Error('Falha na conexão com o servidor');
-
-      console.log('Fetch trips response status:', response.status);
-      
-      if (!response.ok) {
-        const data = await response.json();
-        console.log('Fetch trips response data:', data);
-        
-        if (response.status === 401) {
-          // If error is "Invalid JWT", it's a gateway/key issue, not session expiry
-          if (data.message === 'Invalid JWT') {
-            console.error('Invalid JWT error from Gateway - Check Supabase Keys');
-            throw new Error('Erro de configuração do servidor (Invalid JWT). Contate o suporte.');
-          }
-          
+      if (!response || !response.ok) {
+        if (response?.status === 401) {
           toast.error('Sessão expirada. Por favor, faça login novamente.');
           onLogout();
           return;
         }
-        throw new Error(data.error || 'Failed to fetch trips');
+        throw new Error('Falha ao carregar viagens');
       }
 
       const data = await response.json();
-      console.log('Fetch trips response data:', data);
-
       setTrips(data.trips.sort((a: Trip, b: Trip) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ));
     } catch (error: any) {
-      console.error('Error fetching trips:', error);
-      // Only show toast if it's not a 401 (already handled)
-      if (error.message !== 'Failed to fetch trips' || !error.message.includes('Sessão expirada')) {
-         let errorMessage = error.message || 'Erro ao carregar viagens';
-         if (errorMessage === 'Failed to fetch') {
-           errorMessage = 'Erro de conexão. Tentando reconectar...';
-           // Optionally trigger another retry or just inform user
-         }
-         toast.error(errorMessage);
-      }
+      // Silently handle generic fetch errors to avoid spamming toast
     } finally {
       setLoading(false);
     }
@@ -165,7 +131,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         );
 
         const data = await response.json();
-        
         if (response.ok && data.needsOilChange) {
           alerts.push(data);
         }
@@ -173,76 +138,34 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         console.error('Error checking maintenance:', error);
       }
     }
-
     setMaintenanceAlerts(alerts);
   };
 
   const handleCreateTrip = async (tripData: any) => {
     try {
-      console.log('=== CREATING TRIP ===');
-      console.log('Trip data:', tripData);
-      console.log('Access token:', accessToken ? `${accessToken.substring(0, 20)}...` : 'none');
-      
-      // Retry logic for robust connection
-      let response;
-      let attempts = 0;
-      const maxAttempts = 2;
-      
-      while (attempts < maxAttempts) {
-        try {
-          response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/trips`,
-            {
-              method: 'POST',
-              headers: {
-                'apikey': publicAnonKey,
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${publicAnonKey}`,
-                'x-access-token': accessToken,
-              },
-              body: JSON.stringify(tripData),
-            }
-          );
-          
-          // If we got a response (even 4xx/5xx), break the retry loop
-          break;
-        } catch (fetchError) {
-          attempts++;
-          console.warn(`Attempt ${attempts} failed:`, fetchError);
-          if (attempts >= maxAttempts) throw fetchError;
-          // Wait 500ms before retry
-          await new Promise(r => setTimeout(r, 500));
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/trips`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': publicAnonKey,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'x-access-token': accessToken,
+          },
+          body: JSON.stringify(tripData),
         }
-      }
+      );
 
-      if (!response) throw new Error('Falha na conexão com o servidor');
-
-      console.log('Response status:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
-      
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Sessão expirada. Por favor, faça login novamente.');
-          onLogout();
-          return;
-        }
-        throw new Error(data.error || 'Failed to create trip');
+        throw new Error('Falha ao criar viagem');
       }
 
       toast.success('Viagem iniciada com sucesso!');
       setShowTripForm(false);
       fetchTrips();
     } catch (error: any) {
-      console.error('Error creating trip:', error);
-      
-      let errorMessage = error.message || 'Erro ao iniciar viagem';
-      if (errorMessage === 'Failed to fetch' || errorMessage.includes('NetworkError')) {
-        errorMessage = 'Erro de conexão. Verifique sua internet ou tente novamente em alguns instantes.';
-      }
-      
-      toast.error(errorMessage);
-      // Don't rethrow to avoid crashing the UI flow
+      toast.error(error.message || 'Erro ao iniciar viagem');
     }
   };
 
@@ -265,29 +188,15 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
       const data = await response.json();
       
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('Sessão expirada. Por favor, faça login novamente.');
-          onLogout();
-          return;
-        }
         throw new Error(data.error || 'Failed to complete trip');
       }
 
       toast.success('Viagem finalizada com sucesso!');
-      
-      // Update local state immediately with the returned data
       if (data.trip) {
-        if (data.trip.status !== 'completed') {
-          console.warn('Trip completed but status not updated in response');
-        }
-        
-        setTrips(prevTrips => prevTrips.map(t => 
-          t.id === tripId ? data.trip : t
-        ));
+        setTrips(prevTrips => prevTrips.map(t => t.id === tripId ? data.trip : t));
       }
     } catch (error: any) {
       toast.error(error.message || 'Erro ao finalizar viagem');
-      throw error;
     }
   };
 
@@ -305,24 +214,12 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-         if (response.status === 401) {
-          toast.error('Sessão expirada. Por favor, faça login novamente.');
-          onLogout();
-          return;
-        }
-        throw new Error(data.error || 'Failed to delete trip');
-      }
+      if (!response.ok) throw new Error('Failed to delete trip');
 
       toast.success('Viagem cancelada com sucesso!');
-      
-      // Remove from local state
       setTrips(prevTrips => prevTrips.filter(t => t.id !== tripId));
     } catch (error: any) {
       toast.error(error.message || 'Erro ao cancelar viagem');
-      throw error;
     }
   };
 
@@ -333,8 +230,9 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-white p-2 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center shadow-sm">
-                <img src={appIcon} alt="Logo" className="h-10 w-auto object-contain" />
+              {/* Logo substituído por Ícone Lucide */}
+              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm">
+                <Car className="h-6 w-6 text-blue-600" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Sistema de Frota</h1>
@@ -355,7 +253,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 py-4">
-        {/* Maintenance Alerts */}
         {maintenanceAlerts.length > 0 && (
           <div className="mb-4 space-y-3">
             {maintenanceAlerts.map((alert) => (
@@ -363,15 +260,13 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                 <CircleAlert className="h-4 w-4" />
                 <AlertTitle className="text-sm">Alerta de Manutenção</AlertTitle>
                 <AlertDescription className="text-xs">
-                  Veículo <strong>{alert.plate}</strong> precisa de troca de óleo! 
-                  ({alert.kmSinceOilChange.toLocaleString()} km desde a última troca)
+                  Veículo <strong>{alert.plate}</strong> precisa de troca de óleo!
                 </AlertDescription>
               </Alert>
             ))}
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="mb-4">
           {activeTrips.length === 0 ? (
             <Button onClick={() => setShowTripForm(!showTripForm)} className="flex items-center gap-2 w-full h-11">
@@ -382,13 +277,12 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
              <div className="p-3 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200 text-sm flex items-center gap-2">
               <CircleAlert className="h-4 w-4 flex-shrink-0" />
               <span className="text-xs">
-                Você possui {activeTrips.length > 1 ? `${activeTrips.length} viagens` : 'uma viagem'} em andamento. Finalize-as ou cancele-as para iniciar uma nova.
+                Você possui {activeTrips.length > 1 ? `${activeTrips.length} viagens` : 'uma viagem'} em andamento.
               </span>
             </div>
           )}
         </div>
 
-        {/* Trip Form */}
         {showTripForm && activeTrips.length === 0 && (
           <div className="mb-4">
             <TripForm
@@ -400,7 +294,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
           </div>
         )}
 
-        {/* Trip List with Tabs */}
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="active" className="flex items-center gap-2">
@@ -423,7 +316,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                       Viagens em Andamento
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      {activeTrips.length} {activeTrips.length === 1 ? 'viagem ativa' : 'viagens ativas'}
+                      {activeTrips.length} viagens ativas
                     </CardDescription>
                   </div>
                   <Button
@@ -434,7 +327,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                       setLoading(true);
                       fetchTrips();
                     }}
-                    title="Atualizar lista"
                   >
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   </Button>
@@ -485,7 +377,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                 ) : (
                   <TripList 
                     trips={completedTrips} 
-                    // No actions for history items
                     showDriverName={false} 
                     viewMode="table" 
                   />
