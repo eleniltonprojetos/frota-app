@@ -3,9 +3,11 @@ import { User } from '../types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { projectId, supabaseKey as publicAnonKey } from '../../../utils/supabase/config';
+// CORREÇÃO AQUI: Usando info.tsx e nomes de variáveis padrão
+import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { TripForm } from './TripForm';
+// ... resto dos imports
 import { TripList } from './TripList';
 import { LogOut, Plus, List, CircleAlert, RefreshCw, History } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
