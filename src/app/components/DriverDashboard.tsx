@@ -7,7 +7,7 @@ import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { TripForm } from './TripForm';
 import { TripList } from './TripList';
-import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Car } from 'lucide-react'; // Importado Car
+import { LogOut, Plus, List, CircleAlert, RefreshCw, History } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { InstallPWA } from './InstallPWA';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -52,7 +52,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
   const [loading, setLoading] = useState(true);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<MaintenanceInfo[]>([]);
 
-  // Filter all active trips
   const activeTrips = trips.filter(t => t.status === 'in_progress');
   const completedTrips = trips.filter(t => t.status === 'completed');
 
@@ -225,14 +224,13 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo substituído por Ícone Lucide */}
-              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm">
-                <Car className="h-6 w-6 text-blue-600" />
+              {/* Logo Local /logo.png */}
+              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm w-10 h-10">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Sistema de Frota</h1>
@@ -251,7 +249,6 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 py-4">
         {maintenanceAlerts.length > 0 && (
           <div className="mb-4 space-y-3">

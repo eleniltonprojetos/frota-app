@@ -12,7 +12,7 @@ import { VehicleForm } from './VehicleForm';
 import { VehicleList } from './VehicleList';
 import { UserList } from './UserList';
 import { MaintenanceAlerts } from './MaintenanceAlerts';
-import { LogOut, MonitorPlay, Users, Settings, Car } from 'lucide-react'; // Importado Car
+import { LogOut, Users } from 'lucide-react';
 
 import { TripFilters, TripFiltersState } from './TripFilters';
 import { Switch } from './ui/switch';
@@ -368,14 +368,13 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo substituído por Ícone Lucide */}
-              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm">
-                 <Car className="h-6 w-6 text-blue-600" />
+              {/* Logo Local /logo.png */}
+              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm w-10 h-10">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Frota - Admin</h1>
@@ -396,9 +395,7 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 py-4">
-        {/* Stats Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <Card>
             <CardHeader className="pb-2 px-3 pt-3">
@@ -446,7 +443,6 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
           </Card>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="trips" className="space-y-4">
           <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
             <TabsTrigger value="trips" className="text-xs px-2 py-2">Viagens</TabsTrigger>
@@ -492,7 +488,6 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
             </Card>
           </TabsContent>
 
-          {/* Outros Tabs mantidos conforme original, apenas fechando corretamente as tags */}
           <TabsContent value="users">
             <Card>
               <CardHeader>
@@ -510,12 +505,10 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
 
           <TabsContent value="monitor">
             <Card className="border-orange-200 bg-orange-50/30">
-               {/* Conteúdo do monitor mantido, simplificado para caber na resposta */}
                <div className="p-4 text-center">Monitoramento de frota disponível</div>
             </Card>
           </TabsContent>
           
-          {/* Demais tabs simplificadas para garantir integridade do código */}
           <TabsContent value="maintenance">
              <MaintenanceAlerts projectId={projectId} accessToken={accessToken} trips={trips} />
           </TabsContent>
@@ -557,3 +550,4 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
     </div>
   );
 }
+git commit -m "auteração do logo original"

@@ -10,7 +10,6 @@ import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import { InstallPWA } from './components/InstallPWA';
 import { User } from './types';
-import { Car } from 'lucide-react';
 
 const supabase = getSupabaseClient();
 
@@ -182,47 +181,31 @@ function App() {
       if (error) throw error;
       
       if (data.session) {
-        // Verify token is not expired
         const expiresAt = data.session.expires_at;
         const now = Math.floor(Date.now() / 1000);
-        console.log('Token expires at:', expiresAt, 'Current time:', now);
         
         if (expiresAt && expiresAt < now) {
-          console.log('Token expired, refreshing session...');
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) throw refreshError;
           
           if (refreshData.session) {
-            console.log('Session refreshed. Role:', refreshData.session.user.user_metadata.role);
             setUser(refreshData.session.user as User);
             setAccessToken(refreshData.session.access_token);
           }
         } else {
-          console.log('Session valid. Checking metadata...');
-          
           const sessionUser = data.session.user;
-          
-          // Verify if metadata exists and has role
           if (!sessionUser.user_metadata || !sessionUser.user_metadata.role) {
-             console.log('Metadata missing or incomplete in session, fetching fresh user data...');
              const { data: userData, error: userError } = await supabase.auth.getUser();
-             
              if (!userError && userData.user) {
-                console.log('Fresh user data fetched. Role:', userData.user.user_metadata.role);
                 setUser(userData.user as User);
              } else {
-                console.log('Failed to fetch fresh user data, using session user fallback');
                 setUser(sessionUser as User);
              }
           } else {
-             console.log('Metadata present. Role:', sessionUser.user_metadata.role);
              setUser(sessionUser as User);
           }
-          
           setAccessToken(data.session.access_token);
         }
-      } else {
-        console.log('No active session found');
       }
     } catch (error) {
       console.error('Error checking session:', error);
@@ -234,9 +217,6 @@ function App() {
   const handleSignup = async (email: string, password: string, name: string, role: 'admin' | 'driver') => {
     try {
       const cleanEmail = email.trim();
-      console.log('=== SIGNUP ATTEMPT ===');
-      console.log('Creating user:', { email: cleanEmail, name, role });
-      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/signup`,
         {
@@ -255,24 +235,19 @@ function App() {
       if (!response.ok) {
         throw new Error(data.error || 'Falha no cadastro');
       }
-
-      console.log('User created successfully, now logging in...');
       
-      // Automatically log in after signup to get a valid JWT
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
 
       if (loginError) {
-        console.error('Auto-login after signup failed:', loginError);
         toast.success('Cadastro realizado com sucesso! Faça login.');
         setIsSignup(false);
         return;
       }
 
       if (loginData.session) {
-        console.log('Auto-login successful after signup');
         setUser(loginData.session.user as User);
         setAccessToken(loginData.session.access_token);
         toast.success('Cadastro realizado com sucesso! Você está logado.');
@@ -287,19 +262,10 @@ function App() {
   const handleLogin = async (email: string, password: string) => {
     try {
       const cleanEmail = email.trim();
-      console.log('=== LOGIN ATTEMPT ===');
-      console.log('Email:', cleanEmail);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
-      });
-
-      console.log('Login response:', { 
-        hasSession: !!data.session, 
-        hasUser: !!data.session?.user,
-        hasToken: !!data.session?.access_token,
-        error: error?.message 
       });
 
       if (error) {
@@ -310,12 +276,7 @@ function App() {
       }
 
       if (data.session) {
-        console.log('User metadata:', data.session.user.user_metadata);
-        console.log('Access token:', data.session.access_token.substring(0, 30) + '...');
-        
-        // Test if token works with backend
         await testToken(data.session.access_token);
-        
         setUser(data.session.user as User);
         setAccessToken(data.session.access_token);
         toast.success('Login realizado com sucesso!');
@@ -354,11 +315,17 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
+            {/* Logo Local /logo.png */}
             <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
-              {/* Logo substituído por Ícone Lucide - Funciona sempre */}
-              <div className="h-32 w-32 flex items-center justify-center">
-                <Car className="h-24 w-24 text-blue-600" strokeWidth={1.5} />
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="h-24 w-24 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = '<span style="color:red">Logo não encontrado</span>';
+                }}
+              />
             </div>
             <h1 className="text-2xl mb-1 text-blue-900">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
