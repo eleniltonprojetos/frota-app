@@ -1,8 +1,7 @@
 {
-  {
   "name": "Sistema de Frota",
   "short_name": "Frota",
-  "description": "Aplicativo para gestão e controle de frotas veiculares.",
+  "description": "Sistema completo para gestão de frotas, motoristas e manutenções.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -14,14 +13,12 @@
     {
       "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
