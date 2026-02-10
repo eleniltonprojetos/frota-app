@@ -550,4 +550,3 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
     </div>
   );
 }
-
