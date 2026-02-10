@@ -1,72 +1,79 @@
-const CACHE_NAME = 'frota-cache-v1';
-const urlsToCache = [
+const CACHE_NAME = 'frota-app-v1';
+const DATA_CACHE_NAME = 'frota-data-v1';
+
+// Arquivos essenciais para instalar imediatamente
+const FILES_TO_CACHE = [
   '/',
   '/index.html',
-  '/logo.png',
   '/manifest.json'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+// 1. Instalação do Service Worker
+self.addEventListener('install', (evt) => {
+  console.log('[ServiceWorker] Instalando');
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[ServiceWorker] Fazendo cache dos arquivos estáticos');
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+// 2. Ativação (Limpar caches antigos)
+self.addEventListener('activate', (evt) => {
+  console.log('[ServiceWorker] Ativando');
+  evt.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
+          console.log('[ServiceWorker] Removendo cache antigo', key);
+          return caches.delete(key);
+        }
+      }));
     })
   );
-  event.waitUntil(self.clients.claim());
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  // Ignora requisições que não são http/https (como chrome-extension://)
-  if (!event.request.url.startsWith('http')) {
+// 3. Interceptar requisições (Fetch)
+self.addEventListener('fetch', (evt) => {
+  const url = new URL(evt.request.url);
+
+  // ESTRATÉGIA PARA API (SUPABASE): Network First, depois Cache
+  // Se tiver internet, pega o dado novo e atualiza o cache.
+  // Se não tiver, pega do cache.
+  if (url.hostname.includes('supabase.co')) {
+    evt.respondWith(
+      caches.open(DATA_CACHE_NAME).then((cache) => {
+        return fetch(evt.request)
+          .then((response) => {
+            // Se a resposta for válida, clona e guarda no cache
+            if (response.status === 200) {
+              cache.put(evt.request.url, response.clone());
+            }
+            return response;
+          })
+          .catch((err) => {
+            // Se falhar (offline), tenta pegar do cache
+            return cache.match(evt.request.url);
+          });
+      })
+    );
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then(
-          (response) => {
-            // Check if we received a valid response
-            if(!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                // Cache js, css, png files
-                if (event.request.url.match(/\.(js|css|png|jpg|jpeg|svg)$/)) {
-                  cache.put(event.request, responseToCache);
-                }
-              });
-
-            return response;
-          }
-        );
-      })
+  // ESTRATÉGIA PARA ARQUIVOS ESTÁTICOS: Stale-While-Revalidate
+  // Tenta servir do cache rápido, mas busca atualização em background
+  evt.respondWith(
+    caches.match(evt.request).then((cachedResponse) => {
+      const fetchPromise = fetch(evt.request).then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(evt.request, networkResponse.clone());
+        });
+        return networkResponse;
+      });
+      return cachedResponse || fetchPromise;
+    })
   );
 });
