@@ -550,4 +550,4 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
     </div>
   );
 }
-git commit -m "auteração do logo original"
+
