@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Truck } from 'lucide-react';
-import logoImg from 'figma:asset/62a2fa9de466001ab28a6d9f898100e5aff64736.png';
+// CORREÇÃO: Removemos o import figma:asset que quebra o build local.
+// Certifique-se de colocar sua imagem 'logo.png' na pasta 'public' do seu projeto.
+const logoImg = "/logo.png"; 
+
 import { getSupabaseClient } from '../../utils/supabase/client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { LoginForm } from './components/LoginForm';
@@ -280,7 +283,17 @@ function App() {
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
             <div className="mb-8 flex items-center justify-center">
-               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" />
+               {/* 
+                  Usando o caminho estático. Certifique-se de ter 'logo.png' na pasta 'public'. 
+                  Se preferir usar o ícone Truck, descomente abaixo e comente a tag img.
+               */}
+               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" onError={(e) => {
+                 // Fallback para ícone caso a imagem não exista
+                 e.currentTarget.style.display = 'none';
+                 e.currentTarget.parentElement?.classList.add('text-blue-600');
+                 // Aqui poderíamos renderizar o ícone Truck via CSS ou state, mas o onError esconde a imagem quebrada
+               }}/>
+               {/* <Truck className="h-24 w-24 text-blue-600" /> */}
             </div>
             <h1 className="text-2xl mb-1 text-blue-900 font-bold">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
