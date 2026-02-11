@@ -1,79 +1,73 @@
-const CACHE_NAME = 'frota-app-v1';
-const DATA_CACHE_NAME = 'frota-data-v1';
-
-// Arquivos essenciais para instalar imediatamente
-const FILES_TO_CACHE = [
+const CACHE_NAME = 'frota-cache-v3';
+const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json'
+  // Removi o logo.png da lista crítica obrigatória para evitar que o SW falhe se a imagem não carregar.
+  // Ele será cacheado dinamicamente na primeira vez que aparecer na tela.
 ];
 
-// 1. Instalação do Service Worker
-self.addEventListener('install', (evt) => {
-  console.log('[ServiceWorker] Instalando');
-  evt.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Fazendo cache dos arquivos estáticos');
-      return cache.addAll(FILES_TO_CACHE);
-    })
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error('Falha ao instalar cache inicial:', error);
+      })
   );
   self.skipWaiting();
 });
 
-// 2. Ativação (Limpar caches antigos)
-self.addEventListener('activate', (evt) => {
-  console.log('[ServiceWorker] Ativando');
-  evt.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
-          console.log('[ServiceWorker] Removendo cache antigo', key);
-          return caches.delete(key);
-        }
-      }));
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
-  self.clients.claim();
+  event.waitUntil(self.clients.claim());
 });
 
-// 3. Interceptar requisições (Fetch)
-self.addEventListener('fetch', (evt) => {
-  const url = new URL(evt.request.url);
-
-  // ESTRATÉGIA PARA API (SUPABASE): Network First, depois Cache
-  // Se tiver internet, pega o dado novo e atualiza o cache.
-  // Se não tiver, pega do cache.
-  if (url.hostname.includes('supabase.co')) {
-    evt.respondWith(
-      caches.open(DATA_CACHE_NAME).then((cache) => {
-        return fetch(evt.request)
-          .then((response) => {
-            // Se a resposta for válida, clona e guarda no cache
-            if (response.status === 200) {
-              cache.put(evt.request.url, response.clone());
-            }
-            return response;
-          })
-          .catch((err) => {
-            // Se falhar (offline), tenta pegar do cache
-            return cache.match(evt.request.url);
-          });
-      })
-    );
+self.addEventListener('fetch', (event) => {
+  // Ignora requisições que não são http/https (como chrome-extension://)
+  if (!event.request.url.startsWith('http')) {
     return;
   }
 
-  // ESTRATÉGIA PARA ARQUIVOS ESTÁTICOS: Stale-While-Revalidate
-  // Tenta servir do cache rápido, mas busca atualização em background
-  evt.respondWith(
-    caches.match(evt.request).then((cachedResponse) => {
-      const fetchPromise = fetch(evt.request).then((networkResponse) => {
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(evt.request, networkResponse.clone());
-        });
-        return networkResponse;
-      });
-      return cachedResponse || fetchPromise;
-    })
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).then(
+          (response) => {
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                // Cacheia imagens, scripts e css conforme o usuário navega
+                if (event.request.url.match(/\.(js|css|png|jpg|jpeg|svg|ico)$/)) {
+                  cache.put(event.request, responseToCache);
+                }
+              });
+
+            return response;
+          }
+        );
+      })
   );
 });

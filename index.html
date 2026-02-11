@@ -6,35 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="description" content="Sistema de Gestão de Frotas" />
+    
+    <!-- PWA Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/logo.png">
     <title>Sistema de Frota</title>
-	<!-- Outras tags existentes... -->
-
-  <!-- Habilita modo tela cheia no iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  
-  <!-- Define a cor da barra de status (pode ser black, default ou black-translucent) -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- Título do app na Home Screen -->
-  <meta name="apple-mobile-web-app-title" content="Gestão Frota">
-  
-  <!-- Link para o manifesto -->
-  <link rel="manifest" href="/manifest.json">
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
+        // Tenta registrar assim que a página carrega
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-              console.log('SW registered:', registration);
+              console.log('✅ Service Worker registrado com sucesso:', registration.scope);
             })
             .catch((error) => {
-              console.log('SW registration failed:', error);
+              console.error('❌ Falha ao registrar o Service Worker:', error);
             });
         });
       }
