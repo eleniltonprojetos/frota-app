@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Truck } from 'lucide-react';
+import logoImg from 'figma:asset/62a2fa9de466001ab28a6d9f898100e5aff64736.png';
 import { getSupabaseClient } from '../../utils/supabase/client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { LoginForm } from './components/LoginForm';
@@ -26,46 +28,6 @@ function App() {
     testServerConnection();
     fetchAdminRegistrationSetting();
     console.log('App mounted');
-    // REMOVA O BLOCO DO SERVICE WORKER QUE ESTAVA AQUI
-  }, []);
-
-    // PWA configuration
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = '/manifest.json';
-    document.head.appendChild(link);
-
-    // Configuração de metadados PWA
-    const metaCapable = document.createElement('meta');
-    metaCapable.name = 'apple-mobile-web-app-capable';
-    metaCapable.content = 'yes';
-    document.head.appendChild(metaCapable);
-
-    const metaMobileWeb = document.createElement('meta');
-    metaMobileWeb.name = 'mobile-web-app-capable';
-    metaMobileWeb.content = 'yes';
-    document.head.appendChild(metaMobileWeb);
-
-    const metaStatus = document.createElement('meta');
-    metaStatus.name = 'apple-mobile-web-app-status-bar-style';
-    metaStatus.content = 'black-translucent';
-    document.head.appendChild(metaStatus);
-
-    const metaTheme = document.createElement('meta');
-    metaTheme.name = 'theme-color';
-    metaTheme.content = '#2563eb';
-    document.head.appendChild(metaTheme);
-
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
-      });
-    }
   }, []);
 
   useEffect(() => {
@@ -317,19 +279,10 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
-            {/* Logo Local /logo.png */}
-            <div className="bg-white p-6 rounded-2xl mb-8 shadow-xl transform -rotate-3 overflow-hidden border border-gray-100 flex items-center justify-center">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="h-24 w-24 object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = '<span style="color:red">Logo não encontrado</span>';
-                }}
-              />
+            <div className="mb-8 flex items-center justify-center">
+               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" />
             </div>
-            <h1 className="text-2xl mb-1 text-blue-900">Sistema de Frota</h1>
+            <h1 className="text-2xl mb-1 text-blue-900 font-bold">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
           </div>
           
