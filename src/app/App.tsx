@@ -26,6 +26,8 @@ function App() {
     testServerConnection();
     fetchAdminRegistrationSetting();
     console.log('App mounted');
+    // REMOVA O BLOCO DO SERVICE WORKER QUE ESTAVA AQUI
+  }, []);
 
     // PWA configuration
     const link = document.createElement('link');

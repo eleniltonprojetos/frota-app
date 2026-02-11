@@ -1,11 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './app/App'
-// CORREÇÃO AQUI: O caminho deve apontar para a pasta styles
-import './styles/index.css' 
+import './styles/index.css'
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
+// REMOVA O BLOCO "if ('serviceWorker' in navigator)..." DAQUI
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+// ... resto do código continua igual
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
