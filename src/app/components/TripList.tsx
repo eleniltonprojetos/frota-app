@@ -201,7 +201,7 @@ export function TripList({ trips, onCompleteTrip, onDeleteTrip, showDriverName =
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
-                      <Badge className={`text-xs ${trip.status === 'in_progress' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-500 hover:bg-gray-600'}`}>
+                      <Badge className={`text-xs ${trip.status === 'in_progress' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}`}>
                         {trip.status === 'in_progress' ? 'Progresso' : 'Concluída'}
                       </Badge>
                     </div>
@@ -296,9 +296,9 @@ export function TripList({ trips, onCompleteTrip, onDeleteTrip, showDriverName =
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  <Badge className={trip.status === 'in_progress' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-500 hover:bg-gray-600'}>
-                    {trip.status === 'in_progress' ? 'Em Progresso' : 'Concluída'}
-                  </Badge>
+                  <Badge className={trip.status === 'in_progress' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}>
+  {trip.status === 'in_progress' ? 'Em Progresso' : 'Concluída'}
+</Badge>
                 </div>
               </div>
 
