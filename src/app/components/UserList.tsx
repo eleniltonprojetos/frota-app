@@ -3,7 +3,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown, ArrowUpCircle } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 
@@ -18,12 +18,12 @@ interface UserData {
 
 interface UserListProps {
   accessToken: string;
+  currentUser: any;
 }
 
-export function UserList({ accessToken }: UserListProps) {
+export function UserList({ accessToken, currentUser }: UserListProps) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -49,38 +49,11 @@ export function UserList({ accessToken }: UserListProps) {
       const data = await response.json();
       setUsers(data.users);
       
-      // Determine current user from list (by comparing token claims or just inferring?)
-      // We don't have the current user ID easily available here without decoding token or passing it as prop.
-      // But we can guess or fetch /test-token to identify self.
-      identifySelf(data.users);
-      
     } catch (error: any) {
       toast.error(error.message || 'Erro ao carregar lista de usuários');
     } finally {
       setLoading(false);
     }
-  };
-
-  const identifySelf = async (usersList: UserData[]) => {
-      try {
-        const response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/test-token`,
-            {
-                headers: {
-                    'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${publicAnonKey}`,
-                    'x-access-token': accessToken,
-                }
-            }
-        );
-        const data = await response.json();
-        if (data.userId) {
-            const me = usersList.find(u => u.id === data.userId);
-            if (me) setCurrentUser(me);
-        }
-      } catch (e) {
-          console.error("Failed to identify self", e);
-      }
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
@@ -192,8 +165,11 @@ export function UserList({ accessToken }: UserListProps) {
       if (!currentUser) return false;
       if (currentUser.id === targetUser.id) return false; // Can't delete self
 
-      if (currentUser.role === 'super_admin') return true;
-      if (currentUser.role === 'admin') {
+      // Role check from user_metadata might be in different structure depending on how currentUser is passed
+      const role = currentUser.user_metadata?.role || currentUser.role;
+
+      if (role === 'super_admin') return true;
+      if (role === 'admin') {
           return targetUser.role === 'driver';
       }
       return false;
@@ -201,18 +177,19 @@ export function UserList({ accessToken }: UserListProps) {
 
   const canPromoteToAdmin = (targetUser: UserData) => {
       if (!currentUser) return false;
-      if (currentUser.role !== 'super_admin') return false; // Only Super Admin can promote to admin
+      const role = currentUser.user_metadata?.role || currentUser.role;
+      if (role !== 'super_admin') return false; 
       return targetUser.role === 'driver';
   };
 
   const canDemoteToDriver = (targetUser: UserData) => {
       if (!currentUser) return false;
-      if (currentUser.role !== 'super_admin') return false; // Only Super Admin can demote
+      const role = currentUser.user_metadata?.role || currentUser.role;
+      if (role !== 'super_admin') return false; 
       return targetUser.role === 'admin';
   };
 
   const isBootstrapAvailable = () => {
-      // Logic: If there are NO super admins in the list, ANY admin can promote themselves.
       if (!currentUser) return false;
       const superAdmins = users.filter(u => u.role === 'super_admin');
       return superAdmins.length === 0;
@@ -369,6 +346,7 @@ export function UserList({ accessToken }: UserListProps) {
                     } className={user.role === 'super_admin' ? 'border-amber-500 text-amber-700 bg-amber-50' : ''}>
                         {user.role === 'super_admin' ? 'Super' : user.role === 'admin' ? 'Admin' : 'Mot.'}
                     </Badge>
+                    
                     {canPromoteToAdmin(user) && (
                         <Button
                             variant="ghost"

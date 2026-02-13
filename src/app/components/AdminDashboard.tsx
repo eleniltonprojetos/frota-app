@@ -12,8 +12,7 @@ import { VehicleForm } from './VehicleForm';
 import { VehicleList } from './VehicleList';
 import { UserList } from './UserList';
 import { MaintenanceAlerts } from './MaintenanceAlerts';
-import { LogOut, Users } from 'lucide-react';
-
+import { LogOut, Users, Truck } from 'lucide-react';
 import { TripFilters, TripFiltersState } from './TripFilters';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
@@ -372,8 +371,8 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-14 h-14">
-                <img src={logoImg} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+              <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-lg">
+                <Truck className="w-8 h-8 text-blue-600" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Frota - Admin</h1>
@@ -497,7 +496,7 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
                 <CardDescription>Lista completa de administradores e motoristas cadastrados.</CardDescription>
               </CardHeader>
               <CardContent>
-                <UserList accessToken={accessToken} />
+                <UserList accessToken={accessToken} currentUser={user} />
               </CardContent>
             </Card>
           </TabsContent>
