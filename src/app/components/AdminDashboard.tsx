@@ -18,7 +18,6 @@ import { TripFilters, TripFiltersState } from './TripFilters';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { InstallPWA } from './InstallPWA';
-
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 
 interface AdminDashboardProps {
@@ -28,7 +27,6 @@ interface AdminDashboardProps {
   onUpdatePassword: (password: string) => Promise<void>;
 }
 
-// ... Interfaces mantidas ...
 interface Trip {
   id: string;
   userId: string;
@@ -101,6 +99,8 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
             'apikey': publicAnonKey,
             'Authorization': `Bearer ${publicAnonKey}`,
             'x-access-token': accessToken,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           },
         }
       );
@@ -372,9 +372,8 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo Local /logo.png */}
-              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm w-10 h-10">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <div className="flex items-center justify-center w-14 h-14">
+                <img src={logoImg} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Frota - Admin</h1>
@@ -512,16 +511,22 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
           <TabsContent value="maintenance">
              <MaintenanceAlerts projectId={projectId} accessToken={accessToken} trips={trips} />
           </TabsContent>
+          
           <TabsContent value="register">
              <VehicleForm onVehicleCreated={fetchVehicles} projectId={projectId} accessToken={accessToken} />
           </TabsContent>
+          
           <TabsContent value="vehicles">
              <Card>
                <CardHeader><CardTitle>Frota Cadastrada</CardTitle></CardHeader>
                <CardContent><VehicleList vehicles={vehicles} onDelete={handleDeleteVehicle} onEdit={setEditingVehicle} /></CardContent>
              </Card>
           </TabsContent>
-          <TabsContent value="stats"><div className="text-center py-8 text-gray-500">Estatísticas detalhadas em breve.</div></TabsContent>
+          
+          <TabsContent value="stats">
+            <div className="text-center py-8 text-gray-500">Estatísticas detalhadas em breve.</div>
+          </TabsContent>
+          
           <TabsContent value="settings">
              <Card>
               <CardHeader><CardTitle>Configurações</CardTitle></CardHeader>

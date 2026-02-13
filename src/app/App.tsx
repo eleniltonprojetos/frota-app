@@ -34,6 +34,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (isSignup) {
+      fetchAdminRegistrationSetting();
+    }
+  }, [isSignup]);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsResettingPassword(true);
@@ -81,6 +87,8 @@ function App() {
         {
           headers: {
             'apikey': publicAnonKey,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           },
         }
       );
@@ -282,18 +290,9 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
+            {/* Logo Local /logo.png replaced with Icon */}
             <div className="mb-8 flex items-center justify-center">
-               {/* 
-                  Usando o caminho estático. Certifique-se de ter 'logo.png' na pasta 'public'. 
-                  Se preferir usar o ícone Truck, descomente abaixo e comente a tag img.
-               */}
-               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" onError={(e) => {
-                 // Fallback para ícone caso a imagem não exista
-                 e.currentTarget.style.display = 'none';
-                 e.currentTarget.parentElement?.classList.add('text-blue-600');
-                 // Aqui poderíamos renderizar o ícone Truck via CSS ou state, mas o onError esconde a imagem quebrada
-               }}/>
-               {/* <Truck className="h-24 w-24 text-blue-600" /> */}
+               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" />
             </div>
             <h1 className="text-2xl mb-1 text-blue-900 font-bold">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
