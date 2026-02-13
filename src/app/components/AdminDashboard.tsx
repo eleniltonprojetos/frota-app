@@ -277,6 +277,7 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
             'apikey': publicAnonKey,
             'Authorization': `Bearer ${publicAnonKey}`,
             'x-access-token': accessToken,
+            'Content-Type': 'application/json',
           },
         }
       );
