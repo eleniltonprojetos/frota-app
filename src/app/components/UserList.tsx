@@ -145,6 +145,38 @@ export function UserList({ accessToken }: UserListProps) {
      }
   };
 
+  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'driver') => {
+     const roleName = newRole === 'admin' ? 'Administrador' : 'Motorista';
+     if (!confirm(`Tem certeza que deseja alterar a função deste usuário para ${roleName}?`)) return;
+
+     try {
+        const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/admin/users/${userId}/role`,
+            {
+                method: 'PUT',
+                headers: {
+                    'apikey': publicAnonKey,
+                    'Authorization': `Bearer ${publicAnonKey}`,
+                    'x-access-token': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ role: newRole })
+            }
+        );
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Falha ao atualizar função');
+        }
+        
+        toast.success(`Usuário atualizado para ${roleName} com sucesso!`);
+        fetchUsers();
+     } catch (error: any) {
+         toast.error(error.message);
+     }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Nunca acessou';
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -165,6 +197,18 @@ export function UserList({ accessToken }: UserListProps) {
           return targetUser.role === 'driver';
       }
       return false;
+  };
+
+  const canPromoteToAdmin = (targetUser: UserData) => {
+      if (!currentUser) return false;
+      if (currentUser.role !== 'super_admin') return false; // Only Super Admin can promote to admin
+      return targetUser.role === 'driver';
+  };
+
+  const canDemoteToDriver = (targetUser: UserData) => {
+      if (!currentUser) return false;
+      if (currentUser.role !== 'super_admin') return false; // Only Super Admin can demote
+      return targetUser.role === 'admin';
   };
 
   const isBootstrapAvailable = () => {
@@ -249,6 +293,29 @@ export function UserList({ accessToken }: UserListProps) {
                   {formatDate(user.last_sign_in_at)}
                 </TableCell>
                 <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                    {canPromoteToAdmin(user) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            onClick={() => handleUpdateRole(user.id, 'admin')}
+                            title="Promover a Administrador"
+                        >
+                            <Shield className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {canDemoteToDriver(user) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleUpdateRole(user.id, 'driver')}
+                            title="Rebaixar a Motorista"
+                        >
+                            <UserIcon className="h-4 w-4" />
+                        </Button>
+                    )}
                     {canDelete(user) && (
                         <Button 
                             variant="ghost" 
@@ -260,6 +327,7 @@ export function UserList({ accessToken }: UserListProps) {
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     )}
+                    </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -301,6 +369,28 @@ export function UserList({ accessToken }: UserListProps) {
                     } className={user.role === 'super_admin' ? 'border-amber-500 text-amber-700 bg-amber-50' : ''}>
                         {user.role === 'super_admin' ? 'Super' : user.role === 'admin' ? 'Admin' : 'Mot.'}
                     </Badge>
+                    {canPromoteToAdmin(user) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            onClick={() => handleUpdateRole(user.id, 'admin')}
+                            title="Promover"
+                        >
+                            <Shield className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {canDemoteToDriver(user) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleUpdateRole(user.id, 'driver')}
+                            title="Rebaixar"
+                        >
+                            <UserIcon className="h-4 w-4" />
+                        </Button>
+                    )}
                     {canDelete(user) && (
                         <Button 
                             variant="ghost" 
