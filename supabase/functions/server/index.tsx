@@ -237,19 +237,28 @@ app.post("/make-server-e4206deb/signup", async (c) => {
 
     // Check if admin registration is enabled
     if (role === 'admin') {
-      const { data } = await supabase
+      console.log('Checking admin registration setting for new admin signup...');
+      const { data, error: settingError } = await supabase
         .from("kv_store_e4206deb")
         .select("value")
         .eq("key", "settings:admin_registration_enabled");
         
-      // Default to true if not set (to avoid locking out on first run, although risky, but standard for MVPs)
-      // Actually, for security, if it's not set, maybe allow it? Or disable?
-      // Let's assume default is TRUE until explicitly disabled.
-      const isEnabled = data?.[0]?.value ?? true;
+      if (settingError) {
+         console.log('Error fetching setting:', settingError);
+      }
+      
+      const settingValue = data?.[0]?.value;
+      console.log('Admin registration setting value from DB:', settingValue);
+      
+      // Strict check: Must be explicitly true
+      // If not set (undefined/null), it defaults to false (disabled) to match UI behavior
+      const isEnabled = settingValue === true;
       
       if (!isEnabled) {
+        console.log('Admin registration is disabled (or not set). Request blocked.');
         return c.json({ error: "O cadastro de novos administradores está temporariamente desativado." }, 403);
       }
+      console.log('Admin registration is enabled. Proceeding.');
     }
 
     const { data, error } = await supabase.auth.admin.createUser({
