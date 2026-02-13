@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.frota_app_seven.twa",
+        "sha256_cert_fingerprints": ["1B:FD:22:1B:92:CF:77:48:D4:D3:E6:10:59:1D:BF:48:C7:0A:1C:B2:BD:4B:86:86:34:F3:28:EC:DC:74:39:CA"]
+      }
+    }]
