@@ -14,7 +14,8 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization", "x-access-token", "Cache-Control", "Figma", "Pragma", "apikey", "Expires"],
+    // Removido "Figma" da lista abaixo:
+    allowHeaders: ["Content-Type", "Authorization", "x-access-token", "Cache-Control", "Pragma", "apikey", "Expires"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
