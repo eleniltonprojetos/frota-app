@@ -293,7 +293,7 @@ function App() {
             <div className="mb-8 flex items-center justify-center">
                <div className="h-40 w-40 bg-white-100 rounded-full flex items-center justify-center drop-shadow-lg overflow-hidden p-2">
                   <img 
-                    src="/logo.png" 
+                    src="/logoImg" 
                     alt="Logo Sistema de Frota" 
                     className="w-full h-full object-contain"
                   />
