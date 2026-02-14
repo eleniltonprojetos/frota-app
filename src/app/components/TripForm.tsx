@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { projectId, supabaseKey as publicAnonKey } from '../../../utils/supabase/config';
+import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { RefreshCw } from 'lucide-react';
 
 interface Vehicle {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Truck } from 'lucide-react';
+
 // CORREÇÃO: Removemos o import figma:asset que quebra o build local.
 // Certifique-se de colocar sua imagem 'logo.png' na pasta 'public' do seu projeto.
 const logoImg = "/logo.png"; 
@@ -192,6 +193,8 @@ function App() {
   const handleSignup = async (email: string, password: string, name: string, role: 'admin' | 'driver') => {
     try {
       const cleanEmail = email.trim();
+      const cleanPassword = password.trim();
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/signup`,
         {
@@ -201,7 +204,7 @@ function App() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${publicAnonKey}`,
           },
-          body: JSON.stringify({ email: cleanEmail, password, name, role }),
+          body: JSON.stringify({ email: cleanEmail, password: cleanPassword, name, role }),
         }
       );
 
@@ -213,7 +216,7 @@ function App() {
       
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
-        password,
+        password: cleanPassword,
       });
 
       if (loginError) {
@@ -237,10 +240,11 @@ function App() {
   const handleLogin = async (email: string, password: string) => {
     try {
       const cleanEmail = email.trim();
+      const cleanPassword = password.trim();
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
-        password,
+        password: cleanPassword,
       });
 
       if (error) {
@@ -290,9 +294,11 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
-            {/* Logo Local /logo.png replaced with Icon */}
+            {/* Logo Local replaced with Icon to avoid reference error */}
             <div className="mb-8 flex items-center justify-center">
-               <img src={logoImg} alt="Sistema de Frota" className="h-40 w-auto object-contain drop-shadow-lg" />
+               <div className="h-40 w-40 bg-blue-100 rounded-full flex items-center justify-center drop-shadow-lg">
+                  <Truck className="h-24 w-24 text-blue-600" />
+               </div>
             </div>
             <h1 className="text-2xl mb-1 text-blue-900 font-bold">Sistema de Frota</h1>
             <p className="text-sm text-gray-600">Gerencie sua frota de veículos</p>
