@@ -3,7 +3,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown, AlertTriangle } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 
@@ -26,41 +26,30 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (accessToken) {
-      fetchUsers();
-    } else {
-      setLoading(false);
-    }
-  }, [accessToken, currentUser]);
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
-    if (!accessToken) {
-        console.error("UserList: No access token provided");
-        return;
-    }
-
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/admin/users`,
         {
           headers: {
             'apikey': publicAnonKey,
-            'Authorization': `Bearer ${accessToken}`, // CORRIGIDO: Usa o token do usuário
+            'Authorization': `Bearer ${accessToken}`,
             'x-access-token': accessToken,
           },
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Erro ${response.status}: Falha ao buscar usuários`);
+        throw new Error('Falha ao buscar usuários');
       }
 
       const data = await response.json();
       setUsers(data.users);
       
     } catch (error: any) {
-      console.error("Erro ao buscar usuários:", error);
       toast.error(error.message || 'Erro ao carregar lista de usuários');
     } finally {
       setLoading(false);
@@ -176,6 +165,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
       if (!currentUser) return false;
       if (currentUser.id === targetUser.id) return false; // Can't delete self
 
+      // Role check from user_metadata might be in different structure depending on how currentUser is passed
       const role = currentUser.user_metadata?.role || currentUser.role;
 
       if (role === 'super_admin') return true;
@@ -188,23 +178,15 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const canPromoteToAdmin = (targetUser: UserData) => {
       if (!currentUser) return false;
       const role = currentUser.user_metadata?.role || currentUser.role;
-      
-      // Super Admin e Admin podem promover Drivers
-      if (role === 'super_admin' || role === 'admin') {
-          return targetUser.role === 'driver';
-      }
-      return false;
+      if (role !== 'super_admin') return false; 
+      return targetUser.role === 'driver';
   };
 
   const canDemoteToDriver = (targetUser: UserData) => {
       if (!currentUser) return false;
       const role = currentUser.user_metadata?.role || currentUser.role;
-      
-      // Apenas Super Admin pode rebaixar Admin
-      if (role === 'super_admin') {
-          return targetUser.role === 'admin';
-      }
-      return false;
+      if (role !== 'super_admin') return false; 
+      return targetUser.role === 'admin';
   };
 
   const isBootstrapAvailable = () => {
@@ -221,15 +203,6 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
     );
   }
 
-  if (!currentUser) {
-      return (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 flex items-center gap-2">
-             <AlertTriangle className="h-4 w-4" />
-             <span>Carregando informações do usuário... Se a mensagem persistir, faça logout e login novamente.</span>
-          </div>
-      );
-  }
-
   return (
     <>
       {isBootstrapAvailable() && (
@@ -238,7 +211,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                   <Crown className="h-5 w-5 text-indigo-600" />
                   <div>
                       <h3 className="font-semibold text-indigo-900">Configuração Inicial</h3>
-                      <p className="text-sm text-indigo-700">Você pode se promover a Super Admin.</p>
+                      <p className="text-sm text-indigo-700">Nenhum Super Admin detectado. Você pode se promover agora.</p>
                   </div>
               </div>
               <Button onClick={() => currentUser && handlePromoteToSuperAdmin(currentUser.id)} className="bg-indigo-600 hover:bg-indigo-700">
