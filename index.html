@@ -12,9 +12,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
-    <!-- Linha Adicionada para o Manifesto funcionar -->
     <link rel="manifest" href="/manifest.json" />
-    
     <link rel="apple-touch-icon" href="/logo.png">
     <title>Sistema de Frota</title>
   </head>
@@ -25,9 +23,32 @@
       if ('serviceWorker' in navigator) {
         // Tenta registrar assim que a página carrega
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          // Adicionamos ?v=4 para forçar a atualização do Service Worker
+          navigator.serviceWorker.register('/sw.js?v=4')
             .then((registration) => {
               console.log('✅ Service Worker registrado com sucesso:', registration.scope);
+              
+              // Verifica se há uma atualização esperando
+              if (registration.waiting) {
+                console.log('Nova versão disponível!');
+                // Aqui poderíamos notificar o usuário para recarregar
+              }
+              
+              registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                if (installingWorker == null) {
+                  return;
+                }
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      console.log('Nova atualização disponível. Por favor, recarregue.');
+                    } else {
+                      console.log('Conteúdo cacheado para uso offline.');
+                    }
+                  }
+                };
+              };
             })
             .catch((error) => {
               console.error('❌ Falha ao registrar o Service Worker:', error);
