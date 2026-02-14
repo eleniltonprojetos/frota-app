@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Truck } from 'lucide-react';
-
-// CORREÇÃO: Removemos o import figma:asset que quebra o build local.
-// Certifique-se de colocar sua imagem 'logo.png' na pasta 'public' do seu projeto.
-const logoImg = "/logo.png"; 
-
 import { getSupabaseClient } from '../../utils/supabase/client';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { LoginForm } from './components/LoginForm';
