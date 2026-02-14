@@ -374,7 +374,7 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-14 h-14 bg-white-100 rounded-lg overflow-hidden p-1">
                 <img 
-                  src="/logoImg" 
+                  src="/logo.png" 
                   alt="Logo" 
                    className="w-full h-full object-contain"
                 />
