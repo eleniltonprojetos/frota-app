@@ -3,7 +3,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown } from 'lucide-react';
+import { Shield, User as UserIcon, Calendar, Clock, Loader2, Trash2, Crown, AlertTriangle } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 
@@ -27,9 +27,11 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [accessToken]); // Adicionado dependência do token
 
   const fetchUsers = async () => {
+    if (!accessToken) return;
+
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/admin/users`,
@@ -165,7 +167,6 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
       if (!currentUser) return false;
       if (currentUser.id === targetUser.id) return false; // Can't delete self
 
-      // Role check from user_metadata might be in different structure depending on how currentUser is passed
       const role = currentUser.user_metadata?.role || currentUser.role;
 
       if (role === 'super_admin') return true;
@@ -178,19 +179,29 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const canPromoteToAdmin = (targetUser: UserData) => {
       if (!currentUser) return false;
       const role = currentUser.user_metadata?.role || currentUser.role;
-      if (role !== 'super_admin') return false; 
-      return targetUser.role === 'driver';
+      
+      if (role === 'super_admin') return true; // Super Admin can promote anyone (except to super admin logic handled elsewhere)
+      if (role === 'admin') {
+          return targetUser.role === 'driver';
+      }
+      return false;
   };
 
   const canDemoteToDriver = (targetUser: UserData) => {
       if (!currentUser) return false;
       const role = currentUser.user_metadata?.role || currentUser.role;
-      if (role !== 'super_admin') return false; 
-      return targetUser.role === 'admin';
+      
+      if (role === 'super_admin') return true;
+      return false;
   };
 
   const isBootstrapAvailable = () => {
       if (!currentUser) return false;
+      
+      // VERIFICAÇÃO ADICIONADA: Se eu já sou super admin, não mostre a mensagem
+      const myRole = currentUser.user_metadata?.role || currentUser.role;
+      if (myRole === 'super_admin') return false;
+
       const superAdmins = users.filter(u => u.role === 'super_admin');
       return superAdmins.length === 0;
   };
@@ -203,6 +214,15 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
     );
   }
 
+  if (!currentUser) {
+      return (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 flex items-center gap-2">
+             <AlertTriangle className="h-4 w-4" />
+             <span>Carregando informações do usuário...</span>
+          </div>
+      );
+  }
+
   return (
     <>
       {isBootstrapAvailable() && (
@@ -211,7 +231,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                   <Crown className="h-5 w-5 text-indigo-600" />
                   <div>
                       <h3 className="font-semibold text-indigo-900">Configuração Inicial</h3>
-                      <p className="text-sm text-indigo-700">Nenhum Super Admin detectado. Você pode se promover agora.</p>
+                      <p className="text-sm text-indigo-700">Nenhum Super Admin detectado na lista pública. Você pode reivindicar o acesso.</p>
                   </div>
               </div>
               <Button onClick={() => currentUser && handlePromoteToSuperAdmin(currentUser.id)} className="bg-indigo-600 hover:bg-indigo-700">
