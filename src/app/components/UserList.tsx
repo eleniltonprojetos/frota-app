@@ -26,35 +26,41 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsers();
-    // Debug
-    if (currentUser) {
-        const role = currentUser.user_metadata?.role || currentUser.role;
-        console.log('UserList - Current Role:', role);
+    if (accessToken) {
+      fetchUsers();
+    } else {
+      setLoading(false);
     }
-  }, [currentUser]);
+  }, [accessToken, currentUser]);
 
   const fetchUsers = async () => {
+    if (!accessToken) {
+        console.error("UserList: No access token provided");
+        return;
+    }
+
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/admin/users`,
         {
           headers: {
             'apikey': publicAnonKey,
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${accessToken}`, // CORRIGIDO: Usa o token do usuário
             'x-access-token': accessToken,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Falha ao buscar usuários');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erro ${response.status}: Falha ao buscar usuários`);
       }
 
       const data = await response.json();
       setUsers(data.users);
       
     } catch (error: any) {
+      console.error("Erro ao buscar usuários:", error);
       toast.error(error.message || 'Erro ao carregar lista de usuários');
     } finally {
       setLoading(false);
@@ -73,7 +79,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'DELETE',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${publicAnonKey}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'x-access-token': accessToken,
                 },
             }
@@ -102,7 +108,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'PUT',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${publicAnonKey}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'x-access-token': accessToken,
                     'Content-Type': 'application/json'
                 },
@@ -134,7 +140,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'PUT',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${publicAnonKey}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'x-access-token': accessToken,
                     'Content-Type': 'application/json'
                 },
@@ -215,12 +221,11 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
     );
   }
 
-  // Fallback seguro se currentUser falhar
   if (!currentUser) {
       return (
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 flex items-center gap-2">
              <AlertTriangle className="h-4 w-4" />
-             <span>Carregando informações do usuário... Tente recarregar a página.</span>
+             <span>Carregando informações do usuário... Se a mensagem persistir, faça logout e login novamente.</span>
           </div>
       );
   }
