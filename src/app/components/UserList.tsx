@@ -26,32 +26,40 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsers();
-  }, [accessToken]); // Adicionado dependência do token
+    if (accessToken) {
+        fetchUsers();
+    }
+  }, [accessToken]);
 
   const fetchUsers = async () => {
     if (!accessToken) return;
 
     try {
+      // Usamos publicAnonKey no Authorization para garantir que o Gateway permita a entrada
+      // E passamos o accessToken no x-access-token para nossa validação customizada no servidor
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/admin/users`,
         {
           headers: {
             'apikey': publicAnonKey,
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${publicAnonKey}`, 
             'x-access-token': accessToken,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Falha ao buscar usuários');
+        // Tenta ler o erro do corpo da resposta, se houver
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro detalhado do servidor:', errorData);
+        throw new Error(errorData.error || `Erro ${response.status}: Falha ao buscar usuários`);
       }
 
       const data = await response.json();
       setUsers(data.users);
       
     } catch (error: any) {
+      console.error('Erro no fetchUsers:', error);
       toast.error(error.message || 'Erro ao carregar lista de usuários');
     } finally {
       setLoading(false);
@@ -70,7 +78,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'DELETE',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${accessToken}`,
+                    'Authorization': `Bearer ${publicAnonKey}`,
                     'x-access-token': accessToken,
                 },
             }
@@ -99,7 +107,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'PUT',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${accessToken}`,
+                    'Authorization': `Bearer ${publicAnonKey}`,
                     'x-access-token': accessToken,
                     'Content-Type': 'application/json'
                 },
@@ -131,7 +139,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                 method: 'PUT',
                 headers: {
                     'apikey': publicAnonKey,
-                    'Authorization': `Bearer ${accessToken}`,
+                    'Authorization': `Bearer ${publicAnonKey}`,
                     'x-access-token': accessToken,
                     'Content-Type': 'application/json'
                 },
@@ -180,7 +188,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
       if (!currentUser) return false;
       const role = currentUser.user_metadata?.role || currentUser.role;
       
-      if (role === 'super_admin') return true; // Super Admin can promote anyone (except to super admin logic handled elsewhere)
+      if (role === 'super_admin') return true; 
       if (role === 'admin') {
           return targetUser.role === 'driver';
       }
@@ -198,7 +206,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
   const isBootstrapAvailable = () => {
       if (!currentUser) return false;
       
-      // VERIFICAÇÃO ADICIONADA: Se eu já sou super admin, não mostre a mensagem
+      // Se eu já sou super admin, não mostre a opção
       const myRole = currentUser.user_metadata?.role || currentUser.role;
       if (myRole === 'super_admin') return false;
 
@@ -231,7 +239,7 @@ export function UserList({ accessToken, currentUser }: UserListProps) {
                   <Crown className="h-5 w-5 text-indigo-600" />
                   <div>
                       <h3 className="font-semibold text-indigo-900">Configuração Inicial</h3>
-                      <p className="text-sm text-indigo-700">Nenhum Super Admin detectado na lista pública. Você pode reivindicar o acesso.</p>
+                      <p className="text-sm text-indigo-700">Nenhum Super Admin detectado. Reivindique o acesso.</p>
                   </div>
               </div>
               <Button onClick={() => currentUser && handlePromoteToSuperAdmin(currentUser.id)} className="bg-indigo-600 hover:bg-indigo-700">
