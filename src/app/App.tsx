@@ -289,10 +289,14 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 flex flex-col items-center">
-            {/* Logo Local replaced with Icon to avoid reference error */}
+            {/* Logo Local */}
             <div className="mb-8 flex items-center justify-center">
-               <div className="h-40 w-40 bg-blue-100 rounded-full flex items-center justify-center drop-shadow-lg">
-                  <Truck className="h-24 w-24 text-blue-600" />
+               <div className="h-40 w-40 bg-blue-100 rounded-full flex items-center justify-center drop-shadow-lg overflow-hidden">
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo Sistema de Frota" 
+                    className="w-full h-full object-cover"
+                  />
                </div>
             </div>
             <h1 className="text-2xl mb-1 text-blue-900 font-bold">Sistema de Frota</h1>
