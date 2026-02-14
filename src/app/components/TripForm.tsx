@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { projectId, publicAnonKey } from '../../../utils/supabase/info';
+import { projectId, supabaseKey as publicAnonKey } from '../../../utils/supabase/config';
 import { RefreshCw } from 'lucide-react';
 
 interface Vehicle {
@@ -68,7 +68,11 @@ export function TripForm({ driverName, accessToken, onSubmit, onCancel }: TripFo
       const data = await response.json();
       
       if (response.ok) {
-        setVehicles(data.vehicles || []);
+        // Ensure uniqueness by plate to avoid duplicate key errors
+        const uniqueVehicles = Array.from(
+          new Map((data.vehicles || []).map((v: Vehicle) => [v.plate, v])).values()
+        ) as Vehicle[];
+        setVehicles(uniqueVehicles);
       } else {
         setError(data.error || 'Erro ao carregar veículos');
         console.error('API Error:', data.error);

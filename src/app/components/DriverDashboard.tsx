@@ -7,7 +7,8 @@ import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { TripForm } from './TripForm';
 import { TripList } from './TripList';
-import { LogOut, Plus, List, CircleAlert, RefreshCw, History } from 'lucide-react';
+import { VehicleList } from './VehicleList';
+import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Truck, Car } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { InstallPWA } from './InstallPWA';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -49,7 +50,9 @@ interface MaintenanceInfo {
 export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword }: DriverDashboardProps) {
   const [showTripForm, setShowTripForm] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]); // Using any to match VehicleList structure loosely or fetch result
   const [loading, setLoading] = useState(true);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<MaintenanceInfo[]>([]);
 
   const activeTrips = trips.filter(t => t.status === 'in_progress');
@@ -57,6 +60,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
 
   useEffect(() => {
     fetchTrips();
+    fetchVehicles();
   }, []);
 
   useEffect(() => {
@@ -106,9 +110,41 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ));
     } catch (error: any) {
-      // Silently handle generic fetch errors to avoid spamming toast
+      // Silently handle generic fetch errors
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVehicles = async () => {
+    setLoadingVehicles(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/vehicles?t=${new Date().getTime()}`,
+        {
+          headers: {
+            'apikey': publicAnonKey,
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'x-access-token': accessToken,
+            'Cache-Control': 'no-cache',
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error('Falha ao carregar veículos');
+
+      const data = await response.json();
+      
+      // Deduplicate vehicles if necessary
+      const uniqueVehicles = Array.from(
+        new Map((data.vehicles || []).map((v: any) => [v.plate, v])).values()
+      );
+      
+      setVehicles(uniqueVehicles);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingVehicles(false);
     }
   };
 
@@ -140,6 +176,31 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
     setMaintenanceAlerts(alerts);
   };
 
+  const handleUpdateFuel = async (plate: string, level: number) => {
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/vehicles/${plate}/fuel`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': publicAnonKey,
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'x-access-token': accessToken,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ level }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Falha ao atualizar combustível');
+
+      toast.success('Nível de combustível atualizado!');
+      fetchVehicles(); // Refresh list
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao atualizar combustível');
+    }
+  };
+
   const handleCreateTrip = async (tripData: any) => {
     try {
       const response = await fetch(
@@ -163,6 +224,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
       toast.success('Viagem iniciada com sucesso!');
       setShowTripForm(false);
       fetchTrips();
+      fetchVehicles(); // Update availability
     } catch (error: any) {
       toast.error(error.message || 'Erro ao iniciar viagem');
     }
@@ -194,6 +256,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
       if (data.trip) {
         setTrips(prevTrips => prevTrips.map(t => t.id === tripId ? data.trip : t));
       }
+      fetchVehicles(); // Update availability
     } catch (error: any) {
       toast.error(error.message || 'Erro ao finalizar viagem');
     }
@@ -217,6 +280,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
 
       toast.success('Viagem cancelada com sucesso!');
       setTrips(prevTrips => prevTrips.filter(t => t.id !== tripId));
+      fetchVehicles(); // Update availability
     } catch (error: any) {
       toast.error(error.message || 'Erro ao cancelar viagem');
     }
@@ -228,9 +292,9 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo Local /logo.png */}
-              <div className="bg-blue-50 p-2 rounded-xl overflow-hidden border border-blue-100 flex items-center justify-center shadow-sm w-10 h-10">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              {/* Logo Local */}
+              <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-lg">
+                <Truck className="w-8 h-8 text-blue-600" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Sistema de Frota</h1>
@@ -292,14 +356,22 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         )}
 
         <Tabs defaultValue="active" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="active" className="flex items-center gap-2">
               <List className="h-4 w-4" />
-              <span>Em Andamento ({activeTrips.length})</span>
+              <span className="hidden sm:inline">Em Andamento</span>
+              <span className="sm:hidden">Ativas</span>
+              <span className="ml-1 text-xs bg-gray-100 px-1.5 rounded-full">{activeTrips.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="fleet" className="flex items-center gap-2">
+              <Car className="h-4 w-4" />
+              <span className="hidden sm:inline">Frota</span>
+              <span className="sm:hidden">Frota</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
-              <span>Histórico</span>
+              <span className="hidden sm:inline">Histórico</span>
+              <span className="sm:hidden">Hist.</span>
             </TabsTrigger>
           </TabsList>
           
@@ -313,7 +385,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                       Viagens em Andamento
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      {activeTrips.length} viagens ativas
+                      Suas viagens ativas
                     </CardDescription>
                   </div>
                   <Button
@@ -345,6 +417,45 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                     onDeleteTrip={handleDeleteTrip}
                     showDriverName={false} 
                     viewMode="table" 
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="fleet">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Car className="h-4 w-4" />
+                    Frota Disponível
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      fetchVehicles();
+                    }}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loadingVehicles ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+                <CardDescription className="text-xs">
+                  Atualize o nível de combustível da frota
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                {loadingVehicles ? (
+                   <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  </div>
+                ) : (
+                  <VehicleList 
+                    vehicles={vehicles}
+                    onUpdateFuel={handleUpdateFuel}
+                    isAdmin={false} // Driver view
                   />
                 )}
               </CardContent>
