@@ -293,8 +293,13 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Logo Local */}
-              <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-lg">
+              <div className="flex items-center justify-center w-14 h-14 bg-white-100 rounded-lg overflow-hidden p-1">
                 <Truck className="w-8 h-8 text-blue-600" />
+				<img 
+                  src="/logo.png" 
+                  alt="Logo" 
+                   className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Sistema de Frota</h1>

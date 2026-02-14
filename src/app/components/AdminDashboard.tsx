@@ -372,11 +372,11 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-lg overflow-hidden">
+              <div className="flex items-center justify-center w-14 h-14 bg-white-100 rounded-lg overflow-hidden p-1">
                 <img 
                   src="/logo.png" 
                   alt="Logo" 
-                  className="w-full h-full object-cover"
+                   className="w-full h-full object-contain"
                 />
               </div>
               <div>

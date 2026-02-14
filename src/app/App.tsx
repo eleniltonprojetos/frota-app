@@ -291,11 +291,11 @@ function App() {
           <div className="text-center mb-6 flex flex-col items-center">
             {/* Logo Local */}
             <div className="mb-8 flex items-center justify-center">
-               <div className="h-40 w-40 bg-blue-100 rounded-full flex items-center justify-center drop-shadow-lg overflow-hidden">
+               <div className="h-40 w-40 bg-white-100 rounded-full flex items-center justify-center drop-shadow-lg overflow-hidden p-2">
                   <img 
                     src="/logo.png" 
                     alt="Logo Sistema de Frota" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                </div>
             </div>
