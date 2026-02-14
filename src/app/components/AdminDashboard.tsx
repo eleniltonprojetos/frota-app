@@ -519,7 +519,14 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
           <TabsContent value="vehicles">
              <Card>
                <CardHeader><CardTitle>Frota Cadastrada</CardTitle></CardHeader>
-               <CardContent><VehicleList vehicles={vehicles} onDelete={handleDeleteVehicle} onEdit={setEditingVehicle} /></CardContent>
+               <CardContent>
+                 <VehicleList 
+                   vehicles={vehicles} 
+                   onDelete={handleDeleteVehicle} 
+                   onEdit={setEditingVehicle} 
+                   isAdmin={true} 
+                 />
+               </CardContent>
              </Card>
           </TabsContent>
           
