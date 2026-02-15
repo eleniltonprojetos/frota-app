@@ -19,6 +19,9 @@ import { Label } from './ui/label';
 import { InstallPWA } from './InstallPWA';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 
+// Ajuste aqui se sua imagem estiver em outro local (ex: import logoImg from '../../assets/logo.png')
+const logoImg = "/logo.png";
+
 interface AdminDashboardProps {
   user: User;
   accessToken: string;
@@ -181,6 +184,7 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
             'apikey': publicAnonKey,
             'Authorization': `Bearer ${publicAnonKey}`,
             'x-access-token': accessToken,
+            'Cache-Control': 'no-cache',
           },
         }
       );
@@ -318,6 +322,38 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
     }
   };
 
+  const handleUpdateFuel = async (plate: string, level: number) => {
+    // Optimistic Update
+    const previousVehicles = [...vehicles];
+    setVehicles(prev => prev.map(v => 
+      v.plate === plate ? { ...v, fuelLevel: level } : v
+    ));
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/vehicles/${plate}/fuel`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': publicAnonKey,
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'x-access-token': accessToken,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ level }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Falha ao atualizar combustível');
+
+      toast.success('Nível de combustível atualizado!');
+      fetchVehicles(); 
+    } catch (error: any) {
+      setVehicles(previousVehicles);
+      toast.error(error.message || 'Erro ao atualizar combustível');
+    }
+  };
+
   const calculateVehicleStats = () => {
     const statsMap = new Map<string, VehicleStats>();
 
@@ -372,11 +408,11 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-14 h-14 bg-white-100 rounded-lg overflow-hidden p-1">
+              <div className="flex items-center justify-center w-14 h-14 bg-white rounded-full overflow-hidden p-1">
                 <img 
-                  src="/logo.png" 
+                  src={logoImg} 
                   alt="Logo" 
-                   className="w-full h-full object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
@@ -528,7 +564,9 @@ export function AdminDashboard({ user, accessToken, onLogout, onUpdatePassword }
                    vehicles={vehicles} 
                    onDelete={handleDeleteVehicle} 
                    onEdit={setEditingVehicle} 
+                   onUpdateFuel={handleUpdateFuel}
                    isAdmin={true} 
+                   accessToken={accessToken}
                  />
                </CardContent>
              </Card>

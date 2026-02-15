@@ -15,6 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 
+// Ajuste aqui se sua imagem estiver em outro local (ex: import logoImg from '../../assets/logo.png')
+const logoImg = "/logo.png";
+
 interface DriverDashboardProps {
   user: User;
   accessToken: string;
@@ -130,18 +133,26 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         }
       );
 
-      if (!response.ok) throw new Error('Falha ao carregar veículos');
-
       const data = await response.json();
-      
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Sessão expirada. Por favor, faça login novamente.');
+          onLogout();
+          return;
+        }
+        throw new Error(data.error || 'Falha ao carregar veículos');
+      }
+
       // Deduplicate vehicles if necessary
       const uniqueVehicles = Array.from(
         new Map((data.vehicles || []).map((v: any) => [v.plate, v])).values()
       );
       
       setVehicles(uniqueVehicles);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      toast.error(error.message || 'Erro ao carregar veículos');
     } finally {
       setLoadingVehicles(false);
     }
@@ -225,8 +236,10 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Falha ao criar viagem');
+        throw new Error(data.error || 'Falha ao criar viagem');
       }
 
       toast.success('Viagem iniciada com sucesso!');
@@ -303,7 +316,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
               {/* Logo Local - Redimensionado com fundo branco */}
               <div className="flex items-center justify-center w-14 h-14 bg-white rounded-full overflow-hidden p-1">
                 <img 
-                  src="/logo.png" 
+                  src={logoImg} 
                   alt="Logo" 
                   className="w-full h-full object-contain"
                 />
@@ -468,6 +481,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
                     vehicles={vehicles}
                     onUpdateFuel={handleUpdateFuel}
                     isAdmin={false} // Driver view
+                    accessToken={accessToken}
                   />
                 )}
               </CardContent>
