@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { TripForm } from './TripForm';
 import { TripList } from './TripList';
 import { VehicleList } from './VehicleList';
-import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Truck, Car } from 'lucide-react';
+import { LogOut, Plus, List, CircleAlert, RefreshCw, History, Car } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { InstallPWA } from './InstallPWA';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -22,7 +22,6 @@ interface DriverDashboardProps {
   onUpdatePassword: (password: string) => Promise<void>;
 }
 
-// ... Interfaces mantidas ...
 interface Trip {
   id: string;
   userId: string;
@@ -177,6 +176,12 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
   };
 
   const handleUpdateFuel = async (plate: string, level: number) => {
+    // Optimistic Update: Atualiza a interface imediatamente antes do servidor responder
+    const previousVehicles = [...vehicles];
+    setVehicles(prev => prev.map(v => 
+      v.plate === plate ? { ...v, fuelLevel: level } : v
+    ));
+
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e4206deb/vehicles/${plate}/fuel`,
@@ -195,8 +200,11 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
       if (!response.ok) throw new Error('Falha ao atualizar combustível');
 
       toast.success('Nível de combustível atualizado!');
-      fetchVehicles(); // Refresh list
+      // Atualiza em background para garantir sincronia, mas o usuário já viu a mudança
+      fetchVehicles(); 
     } catch (error: any) {
+      // Reverte em caso de erro
+      setVehicles(previousVehicles);
       toast.error(error.message || 'Erro ao atualizar combustível');
     }
   };
@@ -292,13 +300,12 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
         <div className="max-w-7xl mx-auto px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo Local */}
-              <div className="flex items-center justify-center w-14 h-14 bg-white-100 rounded-lg overflow-hidden p-1">
-                <Truck className="w-8 h-8 text-blue-600" />
-				<img 
+              {/* Logo Local - Redimensionado com fundo branco */}
+              <div className="flex items-center justify-center w-14 h-14 bg-white rounded-lg overflow-hidden p-1">
+                <img 
                   src="/logo.png" 
                   alt="Logo" 
-                   className="w-full h-full object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
