@@ -7,6 +7,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Trash2, Edit, Unlock, Fuel } from 'lucide-react';
 import { toast } from 'sonner';
+import { MaintenanceHistory } from './MaintenanceHistory';
 
 interface Vehicle {
   plate: string;
@@ -33,6 +34,7 @@ interface VehicleListProps {
   onForceUnlock?: (tripId: string) => void;
   onUpdateFuel?: (plate: string, level: number) => Promise<void>;
   isAdmin?: boolean; 
+  accessToken?: string; // Added access token
 }
 
 const FuelGauge = ({ level }: { level: number }) => {
@@ -83,7 +85,7 @@ const FuelGauge = ({ level }: { level: number }) => {
   );
 };
 
-export function VehicleList({ vehicles, onDelete, onEdit, onForceUnlock, onUpdateFuel, isAdmin = false }: VehicleListProps) {
+export function VehicleList({ vehicles, onDelete, onEdit, onForceUnlock, onUpdateFuel, isAdmin = false, accessToken }: VehicleListProps) {
   const [fuelModalOpen, setFuelModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [newFuelLevel, setNewFuelLevel] = useState<string>('');
@@ -159,6 +161,13 @@ export function VehicleList({ vehicles, onDelete, onEdit, onForceUnlock, onUpdat
                      <div className="text-xs bg-red-50 p-1.5 rounded text-red-700 border border-red-100 flex items-center gap-2">
                         <span className="font-semibold">Motorista:</span> {vehicle.activeTrip.userName}
                      </div>
+                  )}
+                  
+                  {/* Maintenance History Access - Shows for everyone if token available */}
+                  {accessToken && (
+                    <div className="mt-2">
+                      <MaintenanceHistory plate={vehicle.plate} accessToken={accessToken} />
+                    </div>
                   )}
                 </div>
                 

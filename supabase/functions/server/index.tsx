@@ -14,7 +14,6 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    // Removido "Figma" da lista abaixo:
     allowHeaders: ["Content-Type", "Authorization", "x-access-token", "Cache-Control", "Pragma", "apikey", "Expires"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
@@ -309,8 +308,6 @@ app.post("/make-server-e4206deb/trips", async (c) => {
     const supabase = getAdminClient();
 
     // Check availability before creating trip
-    // Fetch ALL trips (inefficient but safe for MVP with limited KV capabilities)
-    // A better approach would be to have a 'vehicle_status' index, but we stick to KV scan for simplicity
     const { data: tripsData, error: tripsError } = await supabase
       .from("kv_store_e4206deb")
       .select("value")
@@ -319,20 +316,35 @@ app.post("/make-server-e4206deb/trips", async (c) => {
     if (!tripsError && tripsData) {
       const allTrips = tripsData.map(r => r.value).filter((t: any) => t.vehiclePlate === vehiclePlate);
       
-      // Sort trips to find the latest one
+      // Sort trips to find the latest one - using ROBUST logic matching GET /vehicles
       allTrips.sort((a: any, b: any) => {
-          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return tB - tA;
+          const getTimestamp = (trip: any) => {
+               // Prefer createdAt
+               if (trip.createdAt) {
+                   const t = new Date(trip.createdAt).getTime();
+                   return isNaN(t) ? 0 : t;
+               }
+               return 0;
+          };
+          
+          const timeA = getTimestamp(a);
+          const timeB = getTimestamp(b);
+          
+          if (timeA !== timeB) {
+              return timeB - timeA;
+          }
+          
+          // Tie-breaker: If created at exact same time (duplicate submission or quick retry),
+          // Prefer the COMPLETED one as the "latest" to ensure vehicle is freed.
+          if (a.status === 'completed' && b.status !== 'completed') return -1; // a comes first (completed)
+          if (b.status === 'completed' && a.status !== 'completed') return 1;  // b comes first (completed)
+          
+          return 0;
       });
       
       const latestTrip = allTrips[0];
       
       if (latestTrip && latestTrip.status === 'in_progress') {
-         // Auto-healing check: 
-         // If the user trying to create the trip IS the same user who has the active trip,
-         // AND the active trip is very old (> 24h?), maybe allow?
-         // No, simpler to just block and tell them to finish the previous one.
          console.log(`Vehicle ${vehiclePlate} is already in use by ${latestTrip.userName}`);
          return c.json({ error: `Veículo em uso por ${latestTrip.userName}. Aguarde a finalização.` }, 409);
       }
@@ -723,6 +735,7 @@ app.post("/make-server-e4206deb/vehicles/:plate/oil-change", async (c) => {
       return c.json({ error: authResult.error }, authResult.status);
     }
 
+    const user = authResult.user!;
     const plate = c.req.param('plate');
     const body = await c.req.json();
     const { currentKm } = body;
@@ -733,6 +746,7 @@ app.post("/make-server-e4206deb/vehicles/:plate/oil-change", async (c) => {
 
     const supabase = getAdminClient();
 
+    // 1. Update the "Current State" for alerts (existing logic)
     const { error: saveError } = await supabase
       .from("kv_store_e4206deb")
       .upsert({
@@ -744,10 +758,62 @@ app.post("/make-server-e4206deb/vehicles/:plate/oil-change", async (c) => {
       throw new Error(`Database error recording oil change: ${saveError.message}`);
     }
 
-    return c.json({ success: true, message: "Oil change recorded" });
+    // 2. Create a Historical Record (New Logic)
+    const historyId = crypto.randomUUID();
+    const historyEntry = {
+      id: historyId,
+      plate,
+      type: 'oil_change',
+      km: currentKm,
+      date: new Date().toISOString(),
+      userId: user.id,
+      userName: user.user_metadata?.name || 'Usuário',
+      notes: `Troca de óleo realizada em ${currentKm}km`
+    };
+
+    const { error: historyError } = await supabase
+      .from("kv_store_e4206deb")
+      .upsert({
+        key: `history:maintenance:${plate}:${historyId}`,
+        value: historyEntry
+      });
+
+    if (historyError) {
+      console.log('Error saving history (non-fatal):', historyError);
+    }
+
+    return c.json({ success: true, message: "Oil change recorded and history saved" });
   } catch (error) {
     console.log(`Error recording oil change: ${error}`);
     return c.json({ error: "Erro interno ao registrar troca de óleo" }, 500);
+  }
+});
+
+// Get vehicle maintenance history
+app.get("/make-server-e4206deb/vehicles/:plate/maintenance-history", async (c) => {
+  try {
+    const authResult = await validateUser(c);
+    if (authResult.error) return c.json({ error: authResult.error }, authResult.status);
+
+    const plate = c.req.param('plate');
+    const supabase = getAdminClient();
+
+    const { data, error } = await supabase
+      .from("kv_store_e4206deb")
+      .select("value")
+      .like("key", `history:maintenance:${plate}:%`);
+
+    if (error) throw error;
+
+    const history = data?.map(d => d.value) || [];
+    
+    // Sort by date descending
+    history.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return c.json({ history });
+  } catch (error: any) {
+    console.log(`Error fetching history: ${error}`);
+    return c.json({ error: "Erro ao buscar histórico" }, 500);
   }
 });
 
@@ -1204,6 +1270,59 @@ app.delete("/make-server-e4206deb/vehicles/:plate", async (c) => {
     console.log(`Error deleting vehicle: ${error}`);
     console.log('Stack:', error.stack);
     return c.json({ error: `Erro interno ao excluir veículo: ${error.message}` }, 500);
+  }
+});
+
+// Update Vehicle Fuel Level (Drivers and Admins)
+app.post("/make-server-e4206deb/vehicles/:plate/fuel", async (c) => {
+  try {
+    const authResult = await validateUser(c);
+    if (authResult.error) return c.json({ error: authResult.error }, authResult.status);
+    
+    const user = authResult.user!;
+    const plate = c.req.param('plate');
+    const body = await c.req.json();
+    const { level } = body;
+
+    if (typeof level !== 'number' || level < 0 || level > 100) {
+      return c.json({ error: "Nível de combustível deve ser um número entre 0 e 100" }, 400);
+    }
+
+    const supabase = getAdminClient();
+    
+    // Get existing vehicle
+    const { data: existingData, error: getError } = await supabase
+      .from("kv_store_e4206deb")
+      .select("value")
+      .eq("key", `vehicle:${plate}`);
+
+    if (getError || !existingData || existingData.length === 0) {
+      return c.json({ error: "Veículo não encontrado" }, 404);
+    }
+
+    const vehicle = existingData[0].value;
+    
+    // Update fuel level
+    const updatedVehicle = {
+      ...vehicle,
+      fuelLevel: level,
+      lastFuelUpdate: new Date().toISOString(),
+      lastFuelUpdateBy: user.user_metadata?.name || user.email
+    };
+
+    const { error: updateError } = await supabase
+      .from("kv_store_e4206deb")
+      .upsert({
+        key: `vehicle:${plate}`,
+        value: updatedVehicle
+      });
+
+    if (updateError) throw updateError;
+
+    return c.json({ success: true, vehicle: updatedVehicle });
+  } catch (error: any) {
+    console.log(`Error updating fuel: ${error}`);
+    return c.json({ error: "Erro ao atualizar combustível" }, 500);
   }
 });
 
