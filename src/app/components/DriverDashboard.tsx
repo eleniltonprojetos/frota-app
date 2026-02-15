@@ -301,7 +301,7 @@ export function DriverDashboard({ user, accessToken, onLogout, onUpdatePassword 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Logo Local - Redimensionado com fundo branco */}
-              <div className="flex items-center justify-center w-14 h-14 bg-white rounded-lg overflow-hidden p-1">
+              <div className="flex items-center justify-center w-14 h-14 bg-white rounded-full overflow-hidden p-1">
                 <img 
                   src="/logo.png" 
                   alt="Logo" 
