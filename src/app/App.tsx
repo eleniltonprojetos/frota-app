@@ -142,29 +142,52 @@ function App() {
     try {
       console.log('=== CHECKING SESSION ===');
       const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        // Handle Invalid Refresh Token error explicitly
+        if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+          console.log('Refresh token invalid, clearing session...');
+          await supabase.auth.signOut();
+          setUser(null);
+          setAccessToken(null);
+          return;
+        }
+        throw error;
+      }
+      
       console.log('Session check result:', { 
         hasSession: !!data.session, 
         hasUser: !!data.session?.user,
-        hasToken: !!data.session?.access_token,
-        error: error?.message 
+        hasToken: !!data.session?.access_token
       });
-      
-      if (error) throw error;
       
       if (data.session) {
         const expiresAt = data.session.expires_at;
         const now = Math.floor(Date.now() / 1000);
         
-        if (expiresAt && expiresAt < now) {
+        // Check if token is expired or about to expire (within 60 seconds)
+        if (expiresAt && expiresAt < now + 60) {
+          console.log('Token expired or expiring soon, refreshing...');
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) throw refreshError;
+          
+          if (refreshError) {
+            console.log('Error refreshing session:', refreshError.message);
+            // If refresh fails, sign out to force re-login
+            await supabase.auth.signOut();
+            setUser(null);
+            setAccessToken(null);
+            return;
+          }
           
           if (refreshData.session) {
+            console.log('Session refreshed successfully');
             setUser(refreshData.session.user as User);
             setAccessToken(refreshData.session.access_token);
           }
         } else {
+          // Token is valid
           const sessionUser = data.session.user;
+          // Ensure we have role in metadata
           if (!sessionUser.user_metadata || !sessionUser.user_metadata.role) {
              const { data: userData, error: userError } = await supabase.auth.getUser();
              if (!userError && userData.user) {
@@ -177,9 +200,18 @@ function App() {
           }
           setAccessToken(data.session.access_token);
         }
+      } else {
+        // No session found
+        setUser(null);
+        setAccessToken(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking session:', error);
+      // Safety net: if any auth error occurs, clear state to allow re-login
+      if (error?.message?.includes('Auth') || error?.status === 400 || error?.status === 401) {
+          setUser(null);
+          setAccessToken(null);
+      }
     } finally {
       setLoading(false);
     }
